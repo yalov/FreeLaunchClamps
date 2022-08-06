@@ -10,7 +10,7 @@ make sure, that ssh is set up
 
 Public domain license.
 https://github.com/yalov/SpeedUnitAnnex/blob/master/release.py
-version: 25
+version: 26
 
 Script loads release-arhive to github and spacedock
 you need to set values in the release.json
@@ -80,10 +80,13 @@ def get_version(version_file, obj="VERSION", ignore_patch = False):
 
 def get_description(path):
     """ Get description of the last version in the changelog """
-    version = r"(#+ )?(Version )?\d(\d)?\.\d(\d)?\.\d(\d)?(\.\d)?(/\d(\d)?\.\d(\d)?\.\d(\d)?(\.\d)?)?( [(\"\')][^\n]*[)\"\')])?"
+    version = r"### (Version )?(\d+\.)+\d+(/(\d+\.)+\d+)?( [(\"\'][^\n]*[)\"\')])?"
     changelog = open(path).read()
-    pattern = r"\n\s*\n{0}\n(?P<last>.+?)\n({0}|\n\Z|\Z)".format(version)
-    desc = re.search(pattern, changelog, re.DOTALL).group('last')
+    pattern = r"\s*\n{0}\n(?P<last>.+?)\s*({0}|\Z)".format(version)
+    match = re.search(pattern, changelog, re.DOTALL)
+    if (match == None):
+        return None
+    desc = match.group('last')
     return desc
 
 
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     TOKEN = tkn["GITHUB_TOKEN"]
     SD_LOGIN = tkn["SPACEDOCK_LOGIN"]
     SD_PASS = tkn["SPACEDOCK_PASS"]
-    
+
     is_published = False
 
     if MODNAME == "auto":
@@ -141,6 +144,11 @@ if __name__ == '__main__':
     print("draft: {}\nprerelease: {}\n".format(DRAFT, PRERELEASE))
     print("parsing "+ CHANGELOG +" ...")
     LAST_CHANGE = get_description(CHANGELOG)
+    if (LAST_CHANGE == None):
+        print("The last change does not found, aborted.")
+        input("Press Enter to exit")
+        sys.exit(-1)
+
     import pyperclip
     pyperclip.copy("Version " + VERSION + "\n" + LAST_CHANGE)
     print("- start of desc ------------")
@@ -182,7 +190,7 @@ if __name__ == '__main__':
             print("Failed. Could not access to Spacedock.")
             input("Press Enter to exit")
             sys.exit(-1)
-    
+
         if KSP_VER not in all_versions:
             print("KSP {} is not supported by Spacedock,\nlast supported version is KSP {}"
                 .format(KSP_VER, all_versions[0]))
@@ -197,22 +205,22 @@ if __name__ == '__main__':
                 else:
                     input("Press Enter to exit")
                     sys.exit(-1)
-    
+
         print("KSP {} is supported by Spacedock.".format(KSP_VER))
-    
+
         mod_details = GetSpacedockModDetails(SD_ID)
-    
+
         if not mod_details or 'error' in mod_details:
             print("The mod #{} isn't found.".format(SD_ID))
             input("Press Enter to exit")
             sys.exit(-1)
-    
+
         print("Spacedock info:\nID: {}, NAME: {}\nLast Release {} (KSP {})".format(
             SD_ID, mod_details['name'],
             mod_details['versions'][0]['friendly_version'],
             mod_details['versions'][0]['game_version']
             ))
-    
+
         print("Publish {} (KSP {}) to the Spacedock?".format(VERSION, KSP_VER))
         if input("[y/N]: ") == 'y':
             resp = PublishToSpacedock(SD_ID, ZIPFILE, LAST_CHANGE, VERSION, KSP_VER, SD_LOGIN, SD_PASS)

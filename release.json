@@ -1,0 +1,11 @@
+{
+	"MODNAME": "FreeLaunchClamps",
+	"MODFOLDER": "auto",
+	"VERSIONFILE": "auto",
+	"RELEASESDIR": "Releases",
+	"CHANGELOG": "ChangeLog.md",
+	"DRAFT": false,
+	"PRERELEASE": false,
+	"SPACEDOCK_ID": "0000",
+	"FORUM_ID": "000000"
+}
